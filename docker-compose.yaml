@@ -1,0 +1,44 @@
+version: "3.8"
+networks:
+  djngofirst:
+    name: djngofirst
+    external: true
+
+services:
+  backend:
+    image: backend
+    container_name: backend
+    build:
+      context: ${BASE_DIR}/
+      dockerfile: ${BASE_DIR}/Dockerfile
+    restart: always
+    environment:
+      - uid=1000
+      - gid=1000
+    env_file:
+      - .env
+    volumes:
+      - ${BASE_DIR}/logs/check:/var/log/check
+      - ${BASE_DIR}/check:/apps/check
+    ports:
+      - 8000:8000
+      - 8001:8001
+      - 8002:8002
+    networks:
+      - djngofirst
+    command: bash -c "python manage.py migrate && python manage.py runserver 0:8000"
+
+  psql_db:
+    image: postgres:15-alpine
+    container_name: psql_db
+    restart: always
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+    ports:
+      - '5433:5432'
+    volumes:
+      - ${BASE_DIR}/postgresql/data:/var/lib/postgresql/data
+    networks:
+      - djngofirst
+
